@@ -1,0 +1,480 @@
+/**
+ * JavaCC file
+ */
+ 
+options {
+  JDK_VERSION = "1.5";
+  LOOKAHEAD = 2;
+}
+PARSER_BEGIN(uJavac)
+package uJavac;
+
+public class uJavac {	
+  public static void main(String args[]) throws ParseException {
+	uJavac parser;
+	
+    if (args.length == 0) {
+      System.out.println("Error: no source files !");      
+    } else {
+    	if (args.length == 1) {
+      		System.out.println("uJavac Parser:  Reading from file " + args[0] + " . . .");
+      		try {
+        		parser = new uJavac(new java.io.FileInputStream(args[0]));
+      		} catch (java.io.FileNotFoundException e) {
+        		System.out.println("uJavac Parser:  File " + args[0] + " not found.");
+        		return;
+      		}
+      	} else {
+      		System.out.println("uJavac Parser:  Usage is :");     
+      		System.out.println("         java uJavac inputfile");
+      		return;
+    	}
+    	
+    	try {
+      		parser.CompilationUnit();
+      		System.out.println("uJavac Parser:  uJavac program parsed successfully.");
+    	} catch (ParseException e) {
+      		System.out.println("uJavac Parser:  Encountered errors during parse.");
+      		System.out.println(e.getMessage());
+    	}
+  	}
+ }
+}
+PARSER_END(uJavac)
+
+SKIP :
+{
+ 	" "
+|	"\r"
+|	"\t"
+|	"\n"
+}
+
+SPECIAL_TOKEN : /* COMMENTS */
+{
+  <SINGLE_LINE_COMMENT: "//" (~["\n","\r"])* ("\n"|"\r"|"\r\n")>
+| <FORMAL_COMMENT: "/**" (~["*"])* "*" ("*" | (~["*","/"] (~["*"])* "*"))* "/">
+| <MULTI_LINE_COMMENT: "/*" (~["*"])* "*" ("*" | (~["*","/"] (~["*"])* "*"))* "/">
+}
+
+TOKEN : /* RESERVED WORDS */
+{
+	< CLASS: 	"class" >
+|	< PUBLIC: 	"public" >
+| 	< STATIC: 	"static" >
+|	< VOID: 	"void" >
+|	< MAIN: 	"main" >
+|	< EXTENDS: 	"extends" >
+| 	< RETURN: 	"return" >
+|	< INT: 		"int" >
+|	< BOOL:		"boolean" >
+|	< IF:		"if" >
+|	< ELSE:		"else" >
+|	< WHILE:	"while" >
+|	< TRUE:		"true" >
+|	< FALSE:	"false" >
+|	< THIS:		"this" >
+|	< NEW:		"new" >
+
+|	< STRING:	"String" >
+|	< LENGTH:	"length" >
+|	< PRINTLN:	"System.out.println" >
+}
+
+TOKEN : /* SEPARATORS */
+{
+  < LPAREN: "(" >
+| < RPAREN: ")" >
+| < LBRACE: "{" >
+| < RBRACE: "}" >
+| < LBRACKET: "[" >
+| < RBRACKET: "]" >
+| < SEMICOLON: ";" >
+| < COMMA: "," >
+| < DOT: "." >
+}
+
+
+TOKEN : /* LITERALS */ 
+{
+  < INTEGER_LITERAL: (["0"-"9"])+ >
+  // decimal only
+}
+
+TOKEN : /* IDENTIFIERS */
+{
+  < IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>)* >
+|
+  < #LETTER:
+      [
+       "_",
+       "a"-"z",
+       "A"-"Z"
+      ]
+  >
+|
+  < #DIGIT:
+      [
+		"0"-"9"
+      ]
+  >
+}
+
+TOKEN : /* OPERATORS */
+{
+  < ASSIGN: "=" >
+| < GT: ">" >
+| < LT: "<" >
+| < BANG: "!" >
+| < EQ: "==" >
+| < LE: "<=" >
+| < GE: ">=" >
+| < NE: "!=" >
+| < SC_OR: "||" >
+| < SC_AND: "&&" >
+| < PLUS: "+" >
+| < MINUS: "-" >
+| < STAR: "*" >
+| < SLASH: "/" >
+| < REM: "%" >
+}
+
+/********************************************************************
+ * THE microJAVA LANGUAGE GRAMMAR STARTS HERE 					    *
+ ********************************************************************/
+
+/*
+ *	Program ::= MainClass ClassDecl*
+*/
+void CompilationUnit() :{}{  MainClass()    ( ClassDecl() )*    <EOF>}
+/*
+ * MainClass ::= class id { public static void main ( String [] id )
+ *               { Statement }}
+*/void MainClass() :{}{
+	<CLASS> <IDENTIFIER> <LBRACE> <PUBLIC>
+	<STATIC>
+	<VOID>
+	<MAIN>
+	
+	<LPAREN>
+	<STRING>
+	<LBRACKET>
+	<RBRACKET>
+	<IDENTIFIER>
+	<RPAREN>
+	
+	<LBRACE>
+	//ne-am cacat in cod k era de kkt
+	( Statement() )*
+	<RBRACE>
+	
+	<RBRACE> // end class}
+
+/*
+ * ClassDecl ::= class id { VarDecl* MethodDecl* }
+ *           ::= class id extends id { VarDecl* MethodDecl* } 
+*/
+void ClassDecl() :
+{}
+{
+	<CLASS>
+	<IDENTIFIER>
+	(<EXTENDS> <IDENTIFIER>)?
+	
+	<LBRACE>
+	( VarDecl() )*
+	( MethodDecl() )*
+	<RBRACE>
+}
+
+/*
+ *  VarDecl ::= Type id ;
+*/
+void VarDecl() :
+{}
+{
+	Type()
+	<IDENTIFIER>
+	<SEMICOLON>
+}
+
+/*
+ * MethodDecl ::= public Type id ( FormalList )
+ *                { VarDecl* Statement* return Exp ;} 
+*/
+void MethodDecl() :
+{}
+{
+	<PUBLIC>
+	Type()
+	<IDENTIFIER>
+	<LPAREN>
+	FormalList()
+	<RPAREN>
+	
+	<LBRACE>
+	(VarDecl())*
+	( Statement() )*
+	<RETURN>
+	Exp()
+	<SEMICOLON>
+	<RBRACE>
+}
+
+/*
+ * FormalList ::= Type id FormalRest*
+ *            ::=
+*/
+void FormalList() :
+{}
+{
+	(
+		Type()
+		<IDENTIFIER>
+		( FormalRest() )*
+	)?
+}
+
+/*
+FormalRest ::=, Type id
+*/
+void FormalRest() :
+{}
+{
+	<COMMA>
+	Type()
+	<IDENTIFIER>
+}
+
+/*
+      Type ::= int []
+           ::= boolean
+           ::= int
+           ::= id
+*/
+void Type() :
+{}
+{
+	<INT>
+	<LBRACKET>
+	<RBRACKET>
+|
+	<BOOL>
+|
+	<INT>
+|
+	<IDENTIFIER>
+}
+
+/*
+ Statement ::= { Statement* }
+           ::= if ( Exp ) Statement else Statement
+           ::= while ( Exp ) Statement
+           ::= System.out.println ( Exp ) ;
+           ::= id = Exp ;
+           ::= id [ Exp ]= Exp ;
+*/
+void Statement() :
+{}
+{
+	<LBRACE>
+	( Statement() )*
+	<RBRACE>
+|
+	<IF>
+	<LPAREN>
+	Exp()
+	<RPAREN>
+	Statement()
+	<ELSE>
+	Statement()
+|
+	<WHILE>
+	<LPAREN>
+	Exp()
+	<RPAREN>
+	Statement()
+|
+	<PRINTLN>
+	<LPAREN>
+	Exp()
+	<RPAREN>
+	<SEMICOLON>
+|
+	<IDENTIFIER>
+	[
+		<LBRACKET>
+		Exp()
+		<RBRACKET>
+	]
+	<ASSIGN>
+	Exp()
+	<SEMICOLON>
+}
+
+/*
+       Exp ::= Exp op Exp
+           ::= Exp [ Exp ]
+           ::= Exp . length
+           ::= Exp . id ( ExpList )
+           ::= INTEGER LITERAL
+           ::= true
+           ::= false
+           ::= id
+           ::= this
+           ::= new int [ Exp ]
+           ::= new id ()
+           ::= ! Exp
+           ::= ( Exp )
+
+
+A = A alpha1 | A alpha2 | beta1 | beta2
+
+A = beta1 A' | beta2 A' | ...
+A' = alfa1 A' | alfa2 A' | ... | epsilon
+*/
+
+/*
+Exp        ::= INTEGER LITERAL Exp'
+           ::= true Exp'
+           ::= false Exp'
+           ::= id Exp'
+           ::= this Exp'
+           ::= new int [ Exp ] Exp'
+           ::= new id () Exp'
+           ::= ! Exp Exp'
+           ::= ( Exp ) Exp'
+*/
+void Exp() :
+{}
+{
+		<INTEGER_LITERAL>
+		Exp_()
+	|
+		<TRUE>
+		Exp_()
+	|
+		<FALSE>
+		Exp_()
+	|
+		<IDENTIFIER>
+		Exp_()
+	|
+		<THIS>
+		Exp_()
+	|
+		<NEW>
+		<INT>
+		<LBRACKET>
+		Exp()
+		<RBRACKET>
+		Exp_()
+	|
+		<NEW>
+		<IDENTIFIER>
+		<LPAREN>
+		<RPAREN>
+		Exp_()
+	|
+		<BANG>
+		Exp()
+		Exp_()
+	|
+		<LPAREN>
+		Exp()
+		<RPAREN>
+		Exp_()
+}
+
+/*
+Exp'       ::= op Exp Exp'
+           ::= [ Exp ] Exp'
+           ::= . length Exp'
+           ::= . id ( ExpList ) Exp'
+           ::=
+*/
+void Exp_() :
+{}
+{
+	[
+			Operator()
+			Exp()
+			Exp_()
+		|
+			<LBRACKET>
+			Exp()
+			<RBRACKET>
+			Exp_()
+		|
+			<DOT>
+			<IDENTIFIER>
+			<LPAREN>
+			ExpList()
+			<RPAREN>
+			Exp_()
+		|
+			<DOT>
+			<LENGTH>
+			Exp_()
+	]
+}
+
+/*
+  < ASSIGN: "=" >
+| < GT: ">" >
+| < LT: "<" >
+| < BANG: "!" >
+| < EQ: "==" >
+| < LE: "<=" >
+| < GE: ">=" >
+| < NE: "!=" >
+| < SC_OR: "||" >
+| < SC_AND: "&&" >
+| < PLUS: "+" >
+| < MINUS: "-" >
+| < STAR: "*" >
+| < SLASH: "/" >
+| < REM: "%" >
+*/
+void Operator() :
+{}
+{
+	<ASSIGN>
+| <GT>
+| <LT>
+| <BANG>
+| <EQ>
+| <LE>
+| <GE>
+| <NE>
+| <SC_OR>
+| <SC_AND>
+| <PLUS>
+| <MINUS>
+| <STAR>
+| <SLASH>
+| <REM>
+}
+
+/*
+   ExpList ::= Exp ExpRest*
+           ::=
+*/
+void ExpList() :
+{}
+{
+	[
+		Exp()
+		( ExpRest() )*
+	]
+}
+
+/*
+  ExpRest  ::=  ,Exp
+*/
+void ExpRest() :
+{}
+{
+	<COMMA>
+	Exp()
+}

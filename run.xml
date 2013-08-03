@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="MiniJavaCompiler" basedir="." default="run">
+	<macrodef name="test_parser">
+		<attribute name="testfile"/>		
+		
+		<sequential>
+			<echo message="----------------------------- Testing: @{testfile} -------------------------------">
+			</echo>
+			
+			<java classname="uJavac.uJavac" fork="true">		
+				<arg value="@{testfile}"/>
+				<classpath>
+					<pathelement path="./bin"/>
+				</classpath>
+			</java>
+			
+			<echo message="-----------------------------------------------------------------------------------">				
+			</echo>
+		</sequential>
+	</macrodef>
+	
+	<target name="run">
+		<test_parser testfile="/spazzy/EclipseWorkspaceAn5/MiniJavaCompiler/testfiles/binarysearch.ujava"/>
+		<test_parser testfile="/spazzy/EclipseWorkspaceAn5/MiniJavaCompiler/testfiles/binarytree.ujava"/>
+		<test_parser testfile="/spazzy/EclipseWorkspaceAn5/MiniJavaCompiler/testfiles/bubblesort.ujava"/>		
+		<test_parser testfile="/spazzy/EclipseWorkspaceAn5/MiniJavaCompiler/testfiles/factorial.ujava"/>
+		<test_parser testfile="/spazzy/EclipseWorkspaceAn5/MiniJavaCompiler/testfiles/linearsearch.ujava"/>
+		<test_parser testfile="/spazzy/EclipseWorkspaceAn5/MiniJavaCompiler/testfiles/quicksort.ujava"/>
+		<test_parser testfile="/spazzy/EclipseWorkspaceAn5/MiniJavaCompiler/testfiles/treevisitor.ujava"/>
+	</target>
+</project>
